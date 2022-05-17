@@ -26,6 +26,8 @@ module.exports = (app) => {
     app.get('/users/:name', users.getUsersByName);
     app.post('/users/create', users.create);
     app.post('/user/newrole', users.addNewRoleToUser);
+    app.get('/user/status/:userId', users.getStatus);
+    app.put('/user/update/status/:userId', users.updateStatus);
 
     // auth
     app.post('/auth/login', auth.signIn);
