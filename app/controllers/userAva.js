@@ -3,14 +3,13 @@ const User = mongoose.model('User');
 
 const uploadImage = (req, res) => {
     if(req.file && req.params.userId) {
-        const pathImg = "/uploads/profile/ava/" + req.file.filename;
+        const pathImg = "/profile/ava/" + req.file.filename;
         // const pathImg = req.file.path.slice()
 
         User.updateOne({_id: req.params.userId}, {img: {ava: pathImg}})
             .exec()
             .then((ava) => res.status(200).json({imgPath: pathImg}))
             .catch(err => res.status(400).json({message: "Ava img is not updated"}))
-
     } else {
         res.status(404).json({message: "File or user id is empty"});
     }

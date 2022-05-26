@@ -170,40 +170,54 @@ const getStatus = (req, res) => {
     }
 }
 
+// Languages
 // add language
 const addNewLanguage = async (req, res) => {
     let {userId, lng: language, typeLng, level} = req.params;
 
     if(userId && language && typeLng) {
         // get language
-        let findedLng = await Language.findOne({name: language}).exec();
-        
+        // let findedLng = await Language.findOne({name: language}).exec();
+        let findedLng = await Language.findOne({$or: [{name: language}, {native: language}]}).exec();
         if(findedLng) {
             // find sames languages in our languages object
-            let isSameLng = await findSameLanguage(typeLng, language);
-
+            let isSameLng = await findSameLanguage(typeLng, language, userId);
             if(isSameLng) {
                 res.status(400).json({message: "There is already a language with this name"});
                 return;
             }
 
             let newLng = {}
-            if(level && typeLng === "learning") {
+            let arrayLng = "languages."+typeLng;
+
+            if(typeLng === "learning") {
+                if(level == "null") {
+                    res.status(400).json({message: "The level language is null"});
+                    return;
+                } else if (level < 1 || level > 3) {
+                    res.status(400).json({message: "Incorrect value 'level'"});
+                    return;
+                }
+
                 // create a new object language with level
                 newLng = {
-                    [arrayLng]: {$ref: "languages", $id: findedLng._id, level: level}
+                    [arrayLng]:{ref: {$ref: "languages", $id: findedLng._id}, name: findedLng.name, level: level } 
                 }
             } else {
                 // create a new object language
-                let arrayLng = "languages."+typeLng;
                 newLng = {
-                    [arrayLng]: {$ref: "languages", $id: findedLng._id}
+                    [arrayLng]: {ref: {$ref: "languages", $id: findedLng._id}, name: findedLng.name}
                 };
             }
-
+            
             // create language
-            User.findByIdAndUpdate(userId, { $push: newLng}, {safe: true, upsert: true})
-                .then(lng => res.status(200).json({lng: lng.languages[typeLng]}))
+            User.findByIdAndUpdate(userId, {$push: newLng}, {safe: true, upsert: true, new: true})
+                .exec()
+                .then(lng => {
+                    inserteadElement = lng.languages[typeLng][lng.languages[typeLng].length-1];
+                    // res.status(200).json({lng: lng.languages[typeLng]}) 
+                    res.status(200).json({lng: inserteadElement}); 
+                })
                 .catch(err => res.status(400).json({message: err}));
 
         } else {
@@ -214,27 +228,76 @@ const addNewLanguage = async (req, res) => {
     }
 };
 
-const findSameLanguage = async (typeLng, lng) => {
+const findSameLanguage = async (typeLng, lng, userId) => {
     // get language id
-    let lang = await Language.findOne({name: lng});
+    // let lang = await Language.findOne({name: lng});
+    let lang = await Language.findOne({$or: [{name: lng}, {native: lng}]});
     let lngId = lang._id;
     
     let request = {};
-    arrayLanguage = "languages."+typeLng+".$id"
+    arrayLanguage = "languages."+typeLng+".ref.$id"
     request = {
         [arrayLanguage]: lngId 
     }
 
-    const result = await User.findOne(request)
+    const result = await User.find({$and: [{_id: userId}, {[arrayLanguage]: lngId}]})
         .exec();
 
-    if(result)
+    
+    if(result.length != 0)
         return true;
     return false;
 }
 
 const addLanguage = (req, res) => {
     addNewLanguage(req, res);
+}
+
+// delete language
+const removeLanguage = (req, res) => {
+    let {typeLng, lngId, userId} = req.params;
+    
+    let arrayLng = "languages."+typeLng;
+
+    if(Object.keys(req.params).length > 0) {      
+        User.updateOne({ _id: userId }, {
+            $pull: {
+                [arrayLng]: {_id: lngId}
+            }
+        }, (err, doc) => {
+            if(err)
+                res.status(400).json({message: "The language is don't deleted"})
+            else
+                res.status(200).json(doc)
+                
+        });
+    } else {
+        res.status(204).json({message: "body is empty"});
+        return;
+    }
+}
+
+// edit level the language
+const updateLevelLanguage = (req, res) => {
+    let {lngId, level, userId} = req.params;
+
+    if(Object.keys(req.params).length > 0) {
+        if(level < 1 || level > 3) {
+            res.status(400).json({message: "The level incorrect"});
+            return;
+        }
+
+        User.updateOne({$and: [{_id: userId}, {"languages.learning._id": lngId}]}, 
+            {$set: {"languages.learning.$.level": level}})
+            .exec()
+            .then(user => res.status(200).json({message: "The level has been update"}))
+            .catch(err => res.status(500).json(err));
+        return;
+
+    } else {
+        res.status(404).json({message: 'body is empty'});
+        return;
+    }
 }
 
 // const remove = (req, res) => {
@@ -252,5 +315,7 @@ module.exports = {
     addNewRoleToUser,
     updateStatus,
     getStatus,
-    addLanguage
+    addLanguage,
+    removeLanguage,
+    updateLevelLanguage
 };
