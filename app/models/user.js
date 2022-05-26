@@ -9,9 +9,9 @@ const UserSchema = new mongoose.Schema({
     },
     role: [{$ref:String, $id: mongoose.Schema.Types.ObjectId}],
     languages: {
-        native: [ {$ref: String, $id: mongoose.Schema.Types.ObjectId}],
-        fluent: [{$ref: String, $id: mongoose.Schema.Types.ObjectId, level: Number}],
-        learning: [{$ref: String, $id: mongoose.Schema.Types.ObjectId, level: Number}],
+        native: [{ref: {$ref: String, $id: mongoose.Schema.Types.ObjectId}, name: String} ],
+        fluent: [{ref: {$ref: String, $id: mongoose.Schema.Types.ObjectId}, name: String} ],
+        learning: [{ref: {$ref: String, $id: mongoose.Schema.Types.ObjectId}, name: String, level: Number}],
     },
     friends: [{$ref: String, $id: mongoose.Schema.Types.ObjectId}],
     posts: [{$ref: String, $id: mongoose.Schema.Types.ObjectId}],

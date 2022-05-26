@@ -17,13 +17,15 @@ module.exports = (app) => {
     app.put('/user/update/status/:userId', users.updateStatus);
 
     // images ava
-    app.post('/user/upload/ava/:userId', upload.single('profile-ava'), userAva.uploadImage);
+    app.put('/user/upload/ava/:userId', upload.single('avatar'), userAva.uploadImage);
     app.get('/user/ava/:userId', userAva.getAvaByUserId);
 
     // languages
     app.get('/languages', language.getAllLanguagesInOriginalName);
-    app.post('/user/languages/add/:typeLng/:lng/:userId', users.addLanguage);
+    // app.post('/user/languages/add/:typeLng/:lng/:userId', users.addLanguage);
     app.post('/user/languages/add/:typeLng/:lng/:level/:userId', users.addLanguage);
+    app.put('/user/languages/update/:lngId/:level/:userId', users.updateLevelLanguage);
+    app.delete('/user/languages/remove/:typeLng/:lngId/:userId', users.removeLanguage);
 
     // auth
     app.post('/auth/login', auth.signIn);
