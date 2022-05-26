@@ -1,25 +1,12 @@
-const products = require('../app/controllers/products');
 const users = require('../app/controllers/user');
 const auth = require('../app/controllers/auth');
+const userAva = require('../app/controllers/userAva');
+const language = require('../app/controllers/languages');
+
 const authMiddleware = require('../app/middleware/auth');
+const {upload} = require('../app/middleware/upload');
 
 module.exports = (app) => {
-
-    // products
-    // app.get('/products', authMiddleware,
-    //     products.getAll,
-    // );
-
-    // app.post('/products', authMiddleware,
-    //     products.create,
-    // );
-    // app.put('/products/:id', authMiddleware,
-    //     products.update,
-    // );
-    // app.delete('/products/:id', authMiddleware,
-    //     products.remove,
-    // );
-
     // users
     app.get('/user/:id', users.getUser);
     app.get('/users', users.getAllUsers);
@@ -28,6 +15,15 @@ module.exports = (app) => {
     app.post('/user/newrole', users.addNewRoleToUser);
     app.get('/user/status/:userId', users.getStatus);
     app.put('/user/update/status/:userId', users.updateStatus);
+
+    // images ava
+    app.post('/user/upload/ava/:userId', upload.single('profile-ava'), userAva.uploadImage);
+    app.get('/user/ava/:userId', userAva.getAvaByUserId);
+
+    // languages
+    app.get('/languages', language.getAllLanguagesInOriginalName);
+    app.post('/user/languages/add/:typeLng/:lng/:userId', users.addLanguage);
+    app.post('/user/languages/add/:typeLng/:lng/:level/:userId', users.addLanguage);
 
     // auth
     app.post('/auth/login', auth.signIn);

@@ -1,15 +1,15 @@
 const mongoose = require('mongoose');
 const bCrypt = require('bcrypt');
-const express = require('express');
 
 const User = mongoose.model('User');
 const Role = mongoose.model('Role');
+const Language = mongoose.model('Language');
 
 // get one user by id
 const getUser = (req, res) => {
-    User.findOne({id: req.params.id})
+    User.findOne({_id: req.params.id})
         .exec()
-        .then(user => res.json(user))
+        .then(user => res.status(200).json(user))
         .catch(err => res.status(500).json(err));
 }
 
@@ -146,7 +146,7 @@ const updateStatus = (req, res) => {
     let status = req.body.status;
 
     if(userId && status) {
-        User.updateOne({_id: userId}, {aboutMe: {status: status}})
+        User.updateOne({_id: userId}, {'aboutMe.status': status})
             .exec()
             .then(user => res.status(200).json({message: "The status has be update"}))
             .catch(err => res.status(500).json(err));
@@ -170,6 +170,73 @@ const getStatus = (req, res) => {
     }
 }
 
+// add language
+const addNewLanguage = async (req, res) => {
+    let {userId, lng: language, typeLng, level} = req.params;
+
+    if(userId && language && typeLng) {
+        // get language
+        let findedLng = await Language.findOne({name: language}).exec();
+        
+        if(findedLng) {
+            // find sames languages in our languages object
+            let isSameLng = await findSameLanguage(typeLng, language);
+
+            if(isSameLng) {
+                res.status(400).json({message: "There is already a language with this name"});
+                return;
+            }
+
+            let newLng = {}
+            if(level && typeLng === "learning") {
+                // create a new object language with level
+                newLng = {
+                    [arrayLng]: {$ref: "languages", $id: findedLng._id, level: level}
+                }
+            } else {
+                // create a new object language
+                let arrayLng = "languages."+typeLng;
+                newLng = {
+                    [arrayLng]: {$ref: "languages", $id: findedLng._id}
+                };
+            }
+
+            // create language
+            User.findByIdAndUpdate(userId, { $push: newLng}, {safe: true, upsert: true})
+                .then(lng => res.status(200).json({lng: lng.languages[typeLng]}))
+                .catch(err => res.status(400).json({message: err}));
+
+        } else {
+            res.status(400).json({message: "The language is not founded"});
+        }
+    } else {
+        res.status(400).json({message: "userId or language or type of language is empty"});
+    }
+};
+
+const findSameLanguage = async (typeLng, lng) => {
+    // get language id
+    let lang = await Language.findOne({name: lng});
+    let lngId = lang._id;
+    
+    let request = {};
+    arrayLanguage = "languages."+typeLng+".$id"
+    request = {
+        [arrayLanguage]: lngId 
+    }
+
+    const result = await User.findOne(request)
+        .exec();
+
+    if(result)
+        return true;
+    return false;
+}
+
+const addLanguage = (req, res) => {
+    addNewLanguage(req, res);
+}
+
 // const remove = (req, res) => {
 //     Product.deleteOne({id: req.params.id})
 //     .exec()
@@ -185,4 +252,5 @@ module.exports = {
     addNewRoleToUser,
     updateStatus,
     getStatus,
+    addLanguage
 };
