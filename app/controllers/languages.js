@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Language = mongoose.model('Language');
+const User = mongoose.model('User');
 
 // get all the languages in original name
 const getAllLanguagesInOriginalName = (req, res) => {

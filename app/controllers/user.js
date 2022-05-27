@@ -7,10 +7,15 @@ const Language = mongoose.model('Language');
 
 // get one user by id
 const getUser = (req, res) => {
-    User.findOne({_id: req.params.id})
-        .exec()
-        .then(user => res.status(200).json(user))
-        .catch(err => res.status(500).json(err));
+    let userId = req.params.userId;
+
+    if(userId) {
+        User.findOne({_id: userId})
+            .then(user => res.status(200).json(user))
+            .catch(err => res.status(404).json({message: "user not found"}));
+    } else {
+        res.status(400).json({message: "user id is empty"});
+    }
 }
 
 //get all users
