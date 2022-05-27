@@ -8,7 +8,7 @@ const {upload} = require('../app/middleware/upload');
 
 module.exports = (app) => {
     // users
-    app.get('/user/:id', users.getUser);
+    app.get('/user/:userId', users.getUser);
     app.get('/users', users.getAllUsers);
     app.get('/users/:name', users.getUsersByName);
     app.post('/users/create', users.create);
