@@ -13,7 +13,7 @@ const UserSchema = new mongoose.Schema({
         fluent: [{ref: {$ref: String, $id: mongoose.Schema.Types.ObjectId}, name: String} ],
         learning: [{ref: {$ref: String, $id: mongoose.Schema.Types.ObjectId}, name: String, level: Number}],
     },
-    friends: [{$ref: String, $id: mongoose.Schema.Types.ObjectId}],
+    friends: [{id: mongoose.Schema.Types.ObjectId}],
     posts: [{$ref: String, $id: mongoose.Schema.Types.ObjectId}],
     aboutMe: {
         name: { type: String, require:true },
@@ -21,13 +21,22 @@ const UserSchema = new mongoose.Schema({
         dateBirth: { type: String, require:true },
         gender: { type: String, require:true },
         location: {
-            country: {$ref: String, $id: mongoose.Schema.Types.ObjectId},
-            city: {$ref: String, $id: mongoose.Schema.Types.ObjectId},
+            country: String,
+            city: String,
         },
         status: String,
         description: String,
-        hobby: [String],
-    }
-})
+        hobby: String,
+    },
+    chat: [{
+        roomId: String,
+        companionId: mongoose.Schema.Types.ObjectId,
+        messages: [{
+            sender: String,
+            message: String,
+            dateAt: Date,
+        }],
+    }],
+});
 
 mongoose.model('User', UserSchema);

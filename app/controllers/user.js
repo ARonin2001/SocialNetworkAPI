@@ -19,16 +19,39 @@ const getUser = (req, res) => {
 }
 
 //get all users
-const getAllUsers = (req, res) => {
-    User.find()
+const getSomeUsers = (req, res) => {
+    if(req.params) {
+        const {count, page} = req.params;
+
+        // page
+        let skipCount = page * count - count;
+
+        User.find()
+        .select({
+            "img.ava": 1, 
+            "aboutMe.name": 1, "aboutMe.lastName": 1, "aboutMe.location": 1, "aboutMe.gender": 1, "aboutMe.age": 1,
+            languages: 1
+        })
+        .skip(skipCount).limit(count)
         .exec()
         .then(users => res.json(users))
-        .catch(err => res.status(500).json(err));
+        .catch(err => res.status(400).json(err.message));
+    } else {
+        res.status(200).json({message: "The params is empty"});
+        return;
+    }
 }
 
 // get users by name
-const getUsersByName = (req, res) => {
-    User.find({"aboutMe.name": req.params.name})
+const getUsersByNameOrLastName = (req, res) => {
+    User.find({$or: [{"aboutMe.name": {$regex: `.*${req.params.name}.*`} }, 
+            {"aboutMe.lastName": {$regex: `.*${req.params.name}.*`} }]} )
+        .select({
+                "img.ava": 1, 
+            "aboutMe.name": 1, "aboutMe.lastName": 1, "aboutMe.location": 1, "aboutMe.gender": 1, "aboutMe.age": 1,
+            languages: 1
+        })
+        .limit(20)
         .exec()
         .then(users => res.json(users))
         .catch(err => res.status(500).json(err));
@@ -58,6 +81,7 @@ const createNewUser = async (req, res) => {
                     lastName: body.lastName,
                     dateBirth: body.dateBirth,
                     gender: body.gender,
+                    chat: [],
                     // location: {
                     //     country: body.country,
                     //     city: body.city
@@ -305,22 +329,29 @@ const updateLevelLanguage = (req, res) => {
     }
 }
 
-// const remove = (req, res) => {
-//     Product.deleteOne({id: req.params.id})
-//     .exec()
-//     .then(() => res.json({success: true}))
-//     .catch(err => res.status(500).json(err));
-// }
+const updateAboutMe = (req, res) => {
+    if(req.body) {
+        let newAboutMe = {...req.body};
+
+        User.findByIdAndUpdate(req.params.userId, {$set: {aboutMe: newAboutMe}}, {safe: true, upsert: true, new: true})
+            .exec()
+            .then(user => res.status(200).json(user.aboutMe))
+            .catch(err => res.status(400).json(err.message));
+    } else {
+        res.status(404).json({message: "body is empty"});
+    }
+} 
 
 module.exports = {
     getUser,
-    getAllUsers,
-    getUsersByName,
+    getSomeUsers,
+    getUsersByNameOrLastName,
     create,
     addNewRoleToUser,
     updateStatus,
     getStatus,
     addLanguage,
     removeLanguage,
-    updateLevelLanguage
+    updateLevelLanguage,
+    updateAboutMe
 };

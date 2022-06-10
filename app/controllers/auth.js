@@ -22,11 +22,15 @@ const signIn = (req, res) => {
     const {email, password} = req.body;
 
     User.findOne({email})
+        .select({email: 1, password: 1, friends: 1, 
+            "aboutMe.name": 1, "aboutMe.lastName": 1, "aboutMe.status": 1, 
+            img: 1, "friends.id": 1})
         .exec()
         .then((user) => {
             // if user is not founded
             if(!user) {
-                res.status(401).json({messages: "User does not found"})
+                res.status(400).json({messages: "User does not found"});
+                return;
             }
 
             // сравнивает захешированный пароль с введённым паролем
@@ -35,12 +39,14 @@ const signIn = (req, res) => {
             if(isValid) {
                 // create token
                 updateTokens(user._id).then(tokens => res.json({tokens, user}));
+                return;
             } else {
-                res.status(401).json({message: "Invallid credentials!"})
+                res.status(401).json({message: "Invallid credentials!"});
+                return;
             }
         })
         .catch(err => {
-            res.status(500).json({message: err.message})
+            res.status(500).json(err.message)
         });
 };
 
