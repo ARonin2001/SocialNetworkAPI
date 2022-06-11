@@ -39,8 +39,7 @@ const chatExists = async (userId, companionId) => {
 	return true;
 }
 
-const createChat = async (userId, companionId, res) => {
-	let roomId = await getRoomId(userId, companionId);
+const createChat = async (userId, companionId, roomId, res) => {
 
 	const isChat = await chatExists(userId, companionId);
 
@@ -64,10 +63,10 @@ const createChat = async (userId, companionId, res) => {
 	} else {
 		User.findByIdAndUpdate(userId)
 			.where({"chat.companionId": companionId})
-			.select({chat: 1})
+			.select({"chat.$": 1})
 			.exec()
-			.then(chat => {
-				res.status(200).json(chat);
+			.then(msg => {
+				res.status(200).json(msg.chat[0]);
 			})
 			.catch(err => res.status(400).json(err.message));
 	}
@@ -75,17 +74,35 @@ const createChat = async (userId, companionId, res) => {
 
 const addChat = async (req, res) => {
 	const {id: userId, companionId} = req.params;
-	console.log(req.params);
+	let roomId = await getRoomId(userId, companionId);
 
 	if(userId && companionId) {
-		await createChat(userId, companionId, res);
+		await createChat(userId, companionId, roomId, res);
 		// add chat for companion
-		await createChat(companionId, userId, res);
+		await createChat(companionId, userId, roomId, res);
 	} else {
 		res.status(404).json({message: "The userId or companionId is empty"});
 		return;
 	}
 };
+
+const getChat = async (req, res) => {
+	const {id: userId, companionId} = req.params;
+
+	if(userId && companionId) {
+		User.findById(userId)
+			.where({"chat.companionId": companionId})
+			.select({"chat.$": 1})
+			.exec()
+			.then(msg => {
+				res.status(200).json(msg.chat[0]);
+			})
+			.catch(err => res.status(400).json(err.message));
+	} else {
+		res.status(404).json({message: "The userId or companionId is empty"});
+		return;
+	}
+}
 
 const pushMessage = async (userId, companionId, newMessage, res) => {
 	let isChat = await chatExists(userId, companionId);
@@ -194,4 +211,5 @@ module.exports = {
 	addChat,
 	getAllMessages,
 	getUsersByMessages,
+	getChat,
 }

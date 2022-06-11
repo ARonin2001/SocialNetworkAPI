@@ -17,24 +17,21 @@ const {appPort, mongoUri} = config.app;
 io.on('connection', socket => {
     console.log('user connected', socket.id);
 
-    socket.on("MSG:JOIN", async (roomId) => {
+    socket.on("MSG:JOIN", (roomId) => {
         console.log(`joined to the room: ${roomId}`);
         socket.join(roomId);
     });
 
-    socket.on("MSG:ADD", async(msg) => {
-        const {roomId, companionId, message, dateAt } = msg;
+    socket.on("MSG:ADD", (msg) => {
         console.log(msg);
+        let newMsg = {...msg};        
+        newMsg.sender = "companion";
 
-        const newMessage = {
-            roomId,
-            companionId,
-            sender: "companion",
-            message,
-            dateAt,
-        };
-        socket.to(roomId).broadcast.emit('MSG:ADD', newMessage);
-    })
+        const roomId = msg.roomId;
+
+        socket.broadcast.to(roomId).emit('MSG:ADD', newMsg);
+
+    });
 
     socket.on("disconnect", () => {
         console.log("Client disconnected");

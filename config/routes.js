@@ -50,6 +50,7 @@ module.exports = (app, io) => {
     app.put('/messages/:id', messages.addMessage);
     app.get('/messages/:companionId/:id', messages.getAllMessages);
     app.get('/messages/get/companions/:id', messages.getUsersByMessages);
+    app.get('/messages/get/chat/:companionId/:id', messages.getChat);
     app.put('/messages/add/chat/:companionId/:id', messages.addChat);
 
     // auth
