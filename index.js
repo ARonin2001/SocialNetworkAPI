@@ -13,7 +13,7 @@ config.routes(app, io);
 
 const {appPort, mongoUri} = config.app;
 
-// socket
+// socket for chat
 io.on('connection', socket => {
     console.log('user connected', socket.id);
 

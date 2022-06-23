@@ -81,7 +81,6 @@ const createNewUser = async (req, res) => {
                     lastName: body.lastName,
                     dateBirth: body.dateBirth,
                     gender: body.gender,
-                    chat: [],
                     // location: {
                     //     country: body.country,
                     //     city: body.city
@@ -92,7 +91,12 @@ const createNewUser = async (req, res) => {
                     email: body.email,
                     password: body.password,
                     aboutMe,
+                    img: {
+                        ava: null,
+                        backImg: null,
+                    },
                     role: [],
+                    chat: [],
                 };
 
                 // hash password

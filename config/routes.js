@@ -5,9 +5,12 @@ const language = require('../app/controllers/languages');
 const country = require('../app/controllers/country');
 const friends = require('../app/controllers/friends');
 const messages = require('../app/controllers/message');
+const post = require('../app/controllers/post');
+
+const {Storage} = require('../app/middleware/upload');
 
 const authMiddleware = require('../app/middleware/auth');
-const {upload} = require('../app/middleware/upload');
+// const {upload} = require('../app/middleware/upload');
 
 const mongoose = require('mongoose');
 const User = mongoose.model('User');
@@ -28,7 +31,11 @@ module.exports = (app, io) => {
     app.put('/user/update/aboutMe/:userId', users.updateAboutMe);
 
     // images ava
-    app.put('/user/upload/ava/:userId', upload.single('avatar'), userAva.uploadImage);
+
+    const stor = new Storage("../../uploads/profile/ava/");
+    const avaUpload = stor.getUpload();
+
+    app.put('/user/upload/ava/:userId', avaUpload.single('avatar'), userAva.uploadImage);
     app.get('/user/ava/:userId', userAva.getAvaByUserId);
 
     // languages
@@ -56,4 +63,10 @@ module.exports = (app, io) => {
     // auth
     app.post('/auth/login', auth.signIn);
     app.post('/refresh-tokens', auth.refreshTokens);
+
+    // POSTS
+    const postStorage = new Storage("../../uploads/posts/");
+    const postUpload = postStorage.getUpload(); 
+
+    app.post('/post/add/:id', postUpload.single('postImg'), post.addPost);
 }
