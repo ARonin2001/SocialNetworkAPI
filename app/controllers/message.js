@@ -74,12 +74,13 @@ const createChat = async (userId, companionId, roomId, res) => {
 
 const addChat = async (req, res) => {
 	const {id: userId, companionId} = req.params;
-	let roomId = await getRoomId(userId, companionId);
+	let roomId = req.body.roomId;
+	roomId = roomId ? roomId : await getRoomId(userId, companionId);
 
 	if(userId && companionId) {
 		await createChat(userId, companionId, roomId, res);
 		// add chat for companion
-		await createChat(companionId, userId, roomId, res);
+		// await createChat(companionId, userId, roomId, res);
 	} else {
 		res.status(404).json({message: "The userId or companionId is empty"});
 		return;
@@ -123,21 +124,21 @@ const pushMessage = async (userId, companionId, newMessage, res) => {
 	}
 };
 
-const creatMessage = async (userId, companionId, message, res) => {
+const creatMessage = async (userId, companionId, message, sender, res) => {
 	const newMessage = {
-		sender: "me",
+		sender,
 		message,
 		dateAt: new Date(),
 	};
 	await pushMessage(userId, companionId, newMessage, res);
 
-	newMessage.sender = "companion";
-	newMessage.companionId = userId;
-	await pushMessage(companionId, userId, newMessage, res);
+	// newMessage.sender = "companion";
+	// newMessage.companionId = userId;
+	// await pushMessage(companionId, userId, newMessage, res);
 }
 
 const addMessage = async (req, res) => {
-	const {companionId, message } = req.body;
+	const {companionId, message, sender } = req.body;
 	const userId = req.params.id;
 
 	if(req.body) {
@@ -151,7 +152,7 @@ const addMessage = async (req, res) => {
 		}
 
 		// push message in my db
-		await creatMessage(userId, companionId, message, res);
+		await creatMessage(userId, companionId, message, sender, res);
 	} else {
 		res.status(404).json({message: "The body is empty"});
 		return;
